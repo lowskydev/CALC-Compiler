@@ -1,9 +1,4 @@
-
-
-let new_ref v1 = ref v1
-
+let new_ref v = ref v
 let deref r = !r
-
 let assign r v = r := v
-
-let free r = ()
+let free _r = ()
