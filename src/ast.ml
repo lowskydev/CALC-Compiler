@@ -1,15 +1,16 @@
 (* This file contains the description of the calc language and some utils related to the AST *)
 
 (* The abstract syntax tree (AST) type for the calc language *)
-type ast = 
+type ast =
     Num of int
   | Bool of bool
-  
+  | Id of string
+
   | Add of ast * ast
   | Sub of ast * ast
   | Mul of ast * ast
   | Div of ast * ast
-  
+
   | Eq of ast * ast
   | Neq of ast * ast
   | Lt of ast * ast
@@ -17,18 +18,21 @@ type ast =
   | Gt of ast * ast
   | Ge of ast * ast
   | Neg of ast
-  
+
   | And of ast * ast
   | Or of ast * ast
   | Not of ast
 
+  | Let of (string * ast) list * ast
+
 let paren = fun p q s -> if p > q then "("^s^")" else s
 
 (* This function converts an AST back to a string representation of the expression *)
-let rec unparse_ast p e = 
+let rec unparse_ast p e =
   match e with
   | Num x -> string_of_int x
   | Bool b -> string_of_bool b
+  | Id x -> x
   | Add (e1,e2) -> paren p 10 (unparse_ast 10 e1 ^ " + " ^ unparse_ast 10 e2)
   | Sub (e1,e2) -> paren p 10 (unparse_ast 10 e1 ^ " - " ^ unparse_ast 11 e2)
   | Mul (e1,e2) -> paren p 30 (unparse_ast 20 e1 ^ " * " ^ unparse_ast 20 e2)
@@ -42,5 +46,8 @@ let rec unparse_ast p e =
   | Lt (e1,e2) -> paren p 9 (unparse_ast 9 e1 ^ " < " ^ unparse_ast 10 e2)
   | Le (e1,e2) -> paren p 9 (unparse_ast 9 e1 ^ " <= " ^ unparse_ast 10 e2)
   | Gt (e1,e2) -> paren p 9 (unparse_ast 9 e1 ^ " > " ^ unparse_ast 10 e2)
-  | Ge (e1,e2) -> paren p 9 (unparse_ast 9 e1 ^ " >= " ^ unparse_ast 10 e2) 
-
+  | Ge (e1,e2) -> paren p 9 (unparse_ast 9 e1 ^ " >= " ^ unparse_ast 10 e2)
+  | Let (bindings, body) ->
+      let unparse_binding (id, expr) = id ^ " = " ^ unparse_ast 0 expr in
+      let bindings_str = String.concat " and " (List.map unparse_binding bindings) in
+      paren p 1 ("let " ^ bindings_str ^ " in " ^ unparse_ast 1 body)
