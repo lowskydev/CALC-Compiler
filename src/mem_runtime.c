@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "mem_runtime.h"
 
 typedef void* ref;
