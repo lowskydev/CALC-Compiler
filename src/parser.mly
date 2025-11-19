@@ -27,16 +27,26 @@ expr:
   | seq                   { $1 }
 
 typ:
+  | typ_arrow             { $1 }
+
+typ_arrow:
+  | typ_base ARROW typ_arrow { TFun($1, $3) }
+  | typ_base              { $1 }
+
+typ_base:
   | TINT                  { TInt }
   | TBOOL                 { TBool }
   | TUNIT                 { TUnit }
-  | TREF typ              { TRef $2 }
-  | typ ARROW typ         { TFun($1, $3) }
+  | TREF typ_base         { TRef $2 }
   | LPAREN typ RPAREN     { $2 }
 
 bindings:
-  | ID EQ seq                    { [($1, $3)] }
-  | ID EQ seq LETAND bindings    { ($1, $3) :: $5 }
+  | ID EQ expr_no_seq              { [($1, $3)] }
+  | ID EQ expr_no_seq LETAND bindings { ($1, $3) :: $5 }
+
+expr_no_seq:
+  | FUN LPAREN ID COLON typ RPAREN ARROW expr_no_seq { Fun($3, $5, $8) }
+  | assign                { $1 }
 
 seq:
   | seq SEMICOLON assign  { Seq($1, $3) }
