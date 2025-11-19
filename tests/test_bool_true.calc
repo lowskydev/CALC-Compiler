@@ -1,0 +1,3 @@
+let isPositive = fun (x: int) -> x > 0 in
+printBool(isPositive(5));
+printEndLine()
