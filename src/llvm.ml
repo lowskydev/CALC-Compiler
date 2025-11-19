@@ -288,23 +288,30 @@ let rec compile_llvm env e label block =
     let fun_id = new_fun_id () in
     let fun_name = "lambda_" ^ string_of_int fun_id in
 
-    (* Create environment structure for closure - for now null since no free variables *)
-    (* In a full implementation, we'd need to capture free variables *)
-
     (* Compile the function body - it will be a separate LLVM function *)
-    (* For now, we create a simple closure with null environment *)
     let return_type = match t with
       | FunT (_, ret_t) -> ret_t
       | _ -> failwith "Internal error: Fun must have FunT type"
     in
 
-    (* Store function definition to be generated later *)
-    let param_reg = Register 1 in (* %1 will be the parameter in the function *)
+    (* Compile function body with fresh counter *)
+    (* We'll fix the numbering when we print the function *)
+    let param_reg = Register 1 in (* %1 in the function *)
     let body_env = Env.begin_scope Env.empty_env in
     let body_env' = Env.bind body_env param param_reg in
 
+    (* Use a temporary counter for function body *)
+    let saved_count = !count in
+    count := 2; (* Start at 2 for function body registers *)
+    let saved_fun_count = !fun_count in
+    fun_count := !fun_count - 1; (* Restore fun_count since we incremented it *)
+
     let body_result, _body_env_final, body_label, body_block, body_blocks =
-      compile_llvm body_env' body 0 [] in
+      compile_llvm body_env' body 2 [] in
+
+    (* Restore counter for main function *)
+    fun_count := saved_fun_count;
+    count := saved_count;
 
     function_defs := {
       name = fun_name;
@@ -317,11 +324,11 @@ let rec compile_llvm env e label block =
     } :: !function_defs;
 
     (* Create a closure - pass function pointer and null environment *)
-    let ret = new_reg() in
     let func_bitcast = new_reg() in
+    let ret = new_reg() in
     let call_instr = [
       Bitcast (func_bitcast, "ptr", Const 0, "@" ^ fun_name);
-      Call (ret, "create_closure", [(FunT (param_type, return_type), Register func_bitcast); (FunT (param_type, return_type), Const 0)])
+      Call (ret, "create_closure", [(FunT (param_type, return_type), Register func_bitcast); (RefT UnitT, Const (-1))]) (* Use RefT UnitT for ptr type *)
     ] in
     (Register ret, env, label, block@call_instr, [])
 
@@ -379,6 +386,7 @@ let unparse_label_use n = "%"^string_of_int n
 let unparse_label_declaration l = (string_of_int l)^":"
 
 let unparse_result = function
+  | Const (-1) -> "null"  (* Special case for null pointers *)
   | Const x -> string_of_int x
   | Register x -> unparse_register x
 
@@ -431,7 +439,27 @@ let unparse_llvm_i = function
       "  "^unparse_register r^" = icmp sge i32 "^unparse_result l1^", "^unparse_result l2
   | Call (r, fname, args) ->
       let arg_strs = List.map (fun (t, v) -> unparse_type t ^ " " ^ unparse_result v) args in
-      "  "^unparse_register r^" = call ptr @"^fname^"("^String.concat ", " arg_strs^")"
+      (* Determine return type based on function name *)
+      let ret_type =
+        if String.sub fname 0 (min 13 (String.length fname)) = "apply_closure" &&
+           not (fname = "apply_closure_closure_closure") then
+          "i32"  (* Most apply_closure functions return i32 *)
+        else if fname = "apply_closure_closure_closure" then
+          "ptr"  (* closure -> closure returns ptr *)
+        else if fname = "create_closure" then
+          "ptr"
+        else if List.mem fname ["new_ref_int"; "new_ref_bool"; "new_ref_ref"] then
+          "ptr"
+        else if fname = "deref_int" then
+          "i32"
+        else if fname = "deref_bool" then
+          "i32"
+        else if List.mem fname ["deref_ref"] then
+          "ptr"
+        else
+          "ptr"  (* default to ptr *)
+      in
+      "  "^unparse_register r^" = call "^ret_type^" @"^fname^"("^String.concat ", " arg_strs^")"
   | CallVoid (fname, args) ->
       let arg_strs = List.map (fun (t, v) -> unparse_type t ^ " " ^ unparse_result v) args in
       "  call void @"^fname^"("^String.concat ", " arg_strs^")"
@@ -448,7 +476,7 @@ let print_function_def func_def =
   let param_type_str = unparse_type func_def.param_type in
   let return_type_str = unparse_type func_def.return_type in
 
-  print_endline ("\ndefine " ^ return_type_str ^ " @" ^ func_def.name ^ "(ptr %env, " ^ param_type_str ^ " %1) {");
+  print_endline ("\ndefine " ^ return_type_str ^ " @" ^ func_def.name ^ "(ptr %0, " ^ param_type_str ^ " %1) {");
   print_blocks (func_def.body_blocks @ [(func_def.body_label, func_def.body_block)]);
   print_endline ("  ret " ^ return_type_str ^ " " ^ unparse_result func_def.body_result);
   print_endline "}"
