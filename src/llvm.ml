@@ -135,18 +135,18 @@ let rec compile_llvm env e label block =
     (Register ret, env1, l1, b1@[Xor (ret, r1)], bs1)
 
   (* Equality comparison - works for both int and bool *)
-  | Eq (t,e1,e2) ->
+  | Eq (_,e1,e2) ->
     let r1,env1,l1,b1,bs1 = compile_llvm env e1 label block in
     let r2,env2,l2,b2,bs2 = compile_llvm env1 e2 l1 b1 in
     let ret = new_reg() in
-    (Register ret, env2, l2, b2@[CmpEq (t,ret,r1,r2)], bs1@bs2)
+    (Register ret, env2, l2, b2@[CmpEq (type_of e1,ret,r1,r2)], bs1@bs2)
 
   (* Inequality comparison - works for both int and bool *)
-  | Neq (t,e1,e2) ->
+  | Neq (_,e1,e2) ->
     let r1,env1,l1,b1,bs1 = compile_llvm env e1 label block in
     let r2,env2,l2,b2,bs2 = compile_llvm env1 e2 l1 b1 in
     let ret = new_reg() in
-    (Register ret, env2, l2, b2@[CmpNeq (t,ret,r1,r2)], bs1@bs2)
+    (Register ret, env2, l2, b2@[CmpNeq (type_of e1,ret,r1,r2)], bs1@bs2)
 
   (* Integer comparison operations *)
   | Lt (_,e1,e2) ->

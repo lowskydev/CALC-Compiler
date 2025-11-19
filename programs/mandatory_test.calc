@@ -1,0 +1,11 @@
+let n = new(5) in
+let result = new(1) in
+while !n > 0 do (
+  (if !n != 3 then
+     (result := !result * !n; ())
+  else
+     printInt(0));
+  n := !n - 1
+);
+printInt(!result);
+printEndLine()
