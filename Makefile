@@ -1,4 +1,4 @@
-.PHONY: all build clean repl compile run
+.PHONY: all build clean repl compile run test
 
 PROGRAMS_DIR = programs
 BUILD_DIR = build
@@ -49,6 +49,15 @@ run:
 	clang -c src/closure_runtime.c -o $(BUILD_DIR)/$$BASENAME/$$BASENAME.closure.o; \
 	clang $(BUILD_DIR)/$$BASENAME/$$BASENAME.ll $(BUILD_DIR)/$$BASENAME/$$BASENAME.mem.o $(BUILD_DIR)/$$BASENAME/$$BASENAME.closure.o -o $(BUILD_DIR)/$$BASENAME/$$BASENAME; \
 	$(BUILD_DIR)/$$BASENAME/$$BASENAME
+
+test:
+	@for file in $(PROGRAMS_DIR)/*.calc; do \
+		echo "========================================"; \
+		echo "Running test: $$file"; \
+		echo "========================================"; \
+		$(MAKE) --no-print-directory run FILE=$$file || exit 1; \
+		echo ""; \
+	done
 
 clean:
 	dune clean

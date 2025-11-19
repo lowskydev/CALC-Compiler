@@ -55,6 +55,9 @@ make repl
 # Compile and run a program
 make run FILE=program.calc
 
+# Run all programs in the programs/ folder
+make test
+
 # Compile to LLVM only
 make compile FILE=program.calc OUTPUT=program.ll
 
@@ -98,7 +101,7 @@ printEndLine()
 **Authors**:
 
 - Wiktor Szydłowski 75135
-- Valerii Matviiv (REMEMBER TO FILL IN YOUR STUDENT ID)
+- Valerii Matviiv 75176 
 
 ---
 
