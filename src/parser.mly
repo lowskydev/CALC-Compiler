@@ -22,9 +22,13 @@ main:
 expr:
   | LET bindings IN expr  { Let($2, $4) }
   | IF expr THEN expr ELSE expr { If($2, $4, $6) }
-  | WHILE expr DO expr    { While($2, $4) }
+  | WHILE expr DO assign    { While($2, $4) }
   | FUN LPAREN ID COLON typ RPAREN ARROW expr { Fun($3, $5, $8) }
   | seq                   { $1 }
+
+while_body:
+  | LPAREN seq RPAREN     { $2 }
+  | assign                { $1 }
 
 typ:
   | typ_arrow             { $1 }
@@ -54,6 +58,7 @@ seq:
 
 assign:
   | disj ASSIGN assign    { Assign($1, $3) }
+  | WHILE expr DO while_body { While($2, $4) }
   | disj                  { $1 }
 
 disj:

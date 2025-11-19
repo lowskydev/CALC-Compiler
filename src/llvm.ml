@@ -2,7 +2,7 @@ open Typing
 
 type register = int
 
-type label = int
+type label = string
 
 type result =
   | Const of int
@@ -33,7 +33,7 @@ let reg_count = ref 0
 let label_count = ref 0
 
 let new_reg = fun () -> reg_count := !reg_count + 1; !reg_count
-let new_label = fun () -> label_count := !label_count + 1; !label_count
+let new_label = fun () -> label_count := !label_count + 1; "L" ^ string_of_int !label_count
 
 (* Function counter for generating unique function names *)
 let fun_count = ref 0
@@ -306,12 +306,12 @@ let rec compile_llvm env e label block =
     let saved_reg_count = !reg_count in
     let saved_label_count = !label_count in
     reg_count := 2; (* Start at 2 for function body registers *)
-    label_count := 2; (* Start at 2 for function body labels *)
+    label_count := 0; (* Start at 0 for function body labels *)
     let saved_fun_count = !fun_count in
     fun_count := !fun_count - 1; (* Restore fun_count since we incremented it *)
 
     let body_result, _body_env_final, body_label, body_block, body_blocks =
-      compile_llvm body_env' body 2 [] in
+      compile_llvm body_env' body "L1" [] in
 
     (* Restore counter for main function *)
     fun_count := saved_fun_count;
@@ -386,9 +386,9 @@ let epilogue =
 
 let unparse_register n = "%"^string_of_int n
 
-let unparse_label_use n = "%"^string_of_int n
+let unparse_label_use l = "%"^l
 
-let unparse_label_declaration l = (string_of_int l)^":"
+let unparse_label_declaration l = l^":"
 
 let unparse_result = function
   | Const (-1) -> "null"  (* Special case for null pointers *)
@@ -502,7 +502,7 @@ let print_llvm (_ret,_env,label,instructions,blocks) _t =
 
 let compile e =
   function_defs := [];
-  reg_count := 0;
+  reg_count := -1;
   label_count := 0;
   fun_count := 0;
-  compile_llvm Env.empty_env e 0 []
+  compile_llvm Env.empty_env e "L0" []
