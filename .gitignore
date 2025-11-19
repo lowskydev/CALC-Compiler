@@ -35,3 +35,8 @@ _build/
 test*
 tests*
 test.*
+prog*
+prog.*
+
+# object files
+*.o

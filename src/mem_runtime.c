@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "mem_runtime.h"
 
 typedef void* ref;
@@ -41,4 +42,16 @@ void assign_ref(ref r, ref v) {
 
 void free_ref(ref r) {
     free(r);
+}
+
+void print_int(int v) {
+    printf("%d", v);
+}
+
+void print_bool(int v) {
+    printf("%s", v ? "true" : "false");
+}
+
+void print_endline() {
+    printf("\n");
 }
