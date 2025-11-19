@@ -302,10 +302,10 @@ let rec compile_llvm env e label block =
     let body_env = Env.begin_scope Env.empty_env in
     let body_env' = Env.bind body_env param param_reg in
 
-    (* Use a temporary counter for function body *)
+  (* Use a temporary counter for function body *)
     let saved_reg_count = !reg_count in
     let saved_label_count = !label_count in
-    reg_count := 2; (* Start at 2 for function body registers *)
+    reg_count := 1; (* Start at 1 for function body registers, next will be %2 *)
     label_count := 0; (* Start at 0 for function body labels *)
     let saved_fun_count = !fun_count in
     fun_count := !fun_count - 1; (* Restore fun_count since we incremented it *)
