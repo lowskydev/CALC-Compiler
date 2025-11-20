@@ -1,0 +1,23 @@
+let l1 = [10, 20, 30, 40, 50] in
+let l2 = [true, false, true] in
+let l3 = [[1, 2], [3, 4]] in
+
+printInt(l1[0]);
+printInt(l1[4]);
+
+printBool(l2[0]);
+printBool(l2[1]);
+
+let i = 2 in
+printInt(l1[i]);
+printInt(l1[i + 1]);
+
+let complex = [1 + 1, 3 * 4, 20 / 2] in
+printInt(complex[0]);
+printInt(complex[1]);
+printInt(complex[2]);
+
+let sub = l3[1] in
+printInt(sub[0]);
+printInt(sub[1]);
+printInt(l3[0][1])
