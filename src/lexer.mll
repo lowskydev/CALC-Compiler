@@ -47,6 +47,8 @@ rule read = parse
   | ')'                      { RPAREN }
   | '{'                      { LBRACE }
   | '}'                      { RBRACE }
+  | '['                      { LBRACKET }
+  | ']'                      { RBRACKET }
   | ';'                      { SEMICOLON }
   | ','                      { COMMA }
   | '.'                      { DOT }

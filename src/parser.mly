@@ -11,7 +11,7 @@ open Ast
 %token PRINTINT PRINTBOOL PRINTENDLINE
 %token SEMICOLON COMMA COLON ARROW
 %token FUN TINT TBOOL TUNIT TREF DOT
-%token LBRACE RBRACE
+%token LBRACE RBRACE LBRACKET RBRACKET
 
 %start main
 %type <Ast.ast> main
@@ -57,6 +57,7 @@ typ_base:
   | TREF typ_base         { TRef $2 }
   | LPAREN typ RPAREN     { $2 }
   | LBRACE typ_record_fields RBRACE { TRecord $2 }
+  | LBRACKET typ RBRACKET { TList $2 }
 
 bindings:
   | ID EQ expr_no_seq              { [($1, $3)] }
@@ -108,6 +109,7 @@ app:
   | app LPAREN expr RPAREN { App($1, $3) }
   | app DOT INT            { TupleAccess($1, $3) }
   | app DOT ID             { RecordAccess($1, $3) }
+  | app LBRACKET expr RBRACKET { ListAccess($1, $3) }
   | factor                 { $1 }
 
 factor:
@@ -126,6 +128,7 @@ factor:
   | DEREF factor          { Deref $2 }
   | NEW LPAREN expr RPAREN { New $3 }
   | LBRACE record_fields RBRACE { Record $2 }
+  | LBRACKET expr_list RBRACKET { List $2 }
   | FREE LPAREN expr RPAREN { Free $3 }
   | PRINTINT LPAREN expr RPAREN { PrintInt $3 }
   | PRINTBOOL LPAREN expr RPAREN { PrintBool $3 }
