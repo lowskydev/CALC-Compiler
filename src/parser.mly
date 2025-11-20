@@ -70,7 +70,7 @@ expr_no_seq:
 seq:
   | assign SEMICOLON seq  { Seq($1, $3) }
   | assign SEMICOLON assign { Seq($1, $3) }
-  | seq SEMICOLON assign { Seq($1, $3) }
+  | assign SEMICOLON expr  { Seq($1, $3) }
   | assign                { $1 }
 
 assign:
