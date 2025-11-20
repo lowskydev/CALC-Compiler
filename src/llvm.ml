@@ -59,7 +59,7 @@ let function_defs = ref []
 
 (* Helper to check if a type is represented as a pointer *)
 let is_ptr_type = function
-  | FunT _ | TupleT _ | RefT _ -> true
+  | FunT _ | TupleT _ | RefT _ | RecordT _ -> true 
   | _ -> false
 
 (* Helper to determine apply_closure function name based on types *)
@@ -529,7 +529,7 @@ let rec unparse_structural_type = function
 
 (* Main function for register types - Tuples are pointers in registers *)
 and unparse_type = function
-  | TupleT _ -> "ptr"
+  | TupleT _ | RecordT _ -> "ptr"
   | t -> unparse_structural_type t
 
 let unparse_llvm_i = function
