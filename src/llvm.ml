@@ -425,6 +425,57 @@ let rec compile_llvm env e label block =
       
       (Register ret_reg, env1, l1, b1 @ [gep_instr; load_instr], bs1)
 
+  | Record (ann, sorted_fields) ->
+     let struct_type = type_of (Record(ann, sorted_fields)) in
+     
+     (* Allocate memory (Malloc) - same as Tuple *)
+     let size_ptr_reg = new_reg () in
+     let size_reg = new_reg () in
+     let mem_reg = new_reg () in
+     
+     (* Assuming the struct size logic matches Tuple's malloc strategy *)
+     let init_instrs = [
+        GetElementPtr(size_ptr_reg, struct_type, Const (-1), [Const 1]);
+        PtrToInt(size_reg, Register size_ptr_reg);
+        Call(mem_reg, "malloc", [(IntT, Register size_reg)])
+     ] in
+     
+     (* Compile elements and store them at their specific indices *)
+     let (final_env, final_label, final_block, final_bs) = 
+       List.fold_left (fun (env, l, b, bs) ((_, expr), idx) ->
+         let r_val, env', l', b', bs' = compile_llvm env expr l b in
+         
+         let gep_reg = new_reg () in
+         let gep_instr = GetElementPtr(gep_reg, struct_type, Register mem_reg, [Const 0; Const idx]) in
+         let store_instr = Store(Typing.type_of expr, r_val, Register gep_reg) in
+         
+         (env', l', b' @ [gep_instr; store_instr], bs @ bs')
+       ) (env, label, block @ init_instrs, []) (List.mapi (fun i e -> (e,i)) sorted_fields) 
+     in
+     (Register mem_reg, final_env, final_label, final_block, final_bs)
+
+  | RecordAccess (ann, e, id) ->
+      let r_rec, env1, l1, b1, bs1 = compile_llvm env e label block in
+      let rec_type = Typing.type_of e in 
+      
+      (* Find the index of the field 'id' *)
+      let idx = match rec_type with
+        | RecordT fields -> 
+            let rec find_idx i = function
+              | [] -> failwith "Field not found in compilation"
+              | (f, _) :: tl -> if f = id then i else find_idx (i+1) tl
+            in find_idx 0 fields
+        | _ -> failwith "Compiler error: expected record type"
+      in
+      
+      let gep_reg = new_reg () in
+      let gep_instr = GetElementPtr(gep_reg, rec_type, r_rec, [Const 0; Const idx]) in
+      
+      let ret_reg = new_reg () in
+      let load_instr = Load(ret_reg, ann, Register gep_reg) in
+      
+      (Register ret_reg, env1, l1, b1 @ [gep_instr; load_instr], bs1)
+
 (* Unparse LLVM functions *)
 
 let prologue =
@@ -473,6 +524,7 @@ let rec unparse_structural_type = function
   | RefT _ -> "ptr"
   | FunT _ -> "ptr"
   | TupleT ts -> "{" ^ String.concat ", " (List.map unparse_type ts) ^ "}"
+  | RecordT fs -> "{" ^ String.concat ", " (List.map (fun (_, t) -> unparse_type t) fs) ^ "}"
   | _ -> failwith "Unknown type"
 
 (* Main function for register types - Tuples are pointers in registers *)
