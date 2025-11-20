@@ -20,6 +20,9 @@ rule read = parse
   | "free"                   { FREE }
   | "printInt"               { PRINTINT }
   | "printBool"              { PRINTBOOL }
+  | "printString"            { PRINTSTRING }
+  | "intToString"            { INTTOSTRING }
+  | "string"                 { TSTRING }
   | "printEndLine"           { PRINTENDLINE }
   | "fun"                    { FUN }
   | "int"                    { TINT }
@@ -53,5 +56,6 @@ rule read = parse
   | ','                      { COMMA }
   | '.'                      { DOT }
   | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as id { ID id }
+  | '"' [^ '"']* '"' as s { STRING (String.sub s 1 (String.length s - 2)) }
   | eof                      { EOF }
   | _ as c                   { raise (Lexing_error (Printf.sprintf "Unexpected char: %c" c)) }

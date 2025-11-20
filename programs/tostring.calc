@@ -1,0 +1,5 @@
+let x = 10 in
+let y = 20 in
+printString("The result is: ");
+printString(intToString(x + y));
+printEndLine()
