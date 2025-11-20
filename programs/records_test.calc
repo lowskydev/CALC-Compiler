@@ -1,0 +1,33 @@
+let r1 = {x = 10; y = 20; z = 30} in
+printInt(r1.x);
+printInt(r1.y);
+printInt(r1.z);
+printEndLine();
+(let r2 = {a = 1; b = true; c = 3} in
+  printInt(r2.a);
+  printBool(r2.b);
+  printInt(r2.c);
+  printEndLine();
+
+  (let r3 = {val = 100; inner = {p = 200; q = 300}} in
+    printInt(r3.val);
+    printInt(r3.inner.p);
+    printInt(r3.inner.q);
+    printEndLine();
+
+    (let swap = fun (r: {x:int; y:int}) -> {x = r.y; y = r.x} in
+      let r4 = {x = 5; y = 10} in
+      let swapped = swap(r4) in
+      printInt(swapped.x);
+      printInt(swapped.y);
+      printEndLine();
+
+      (let ptr = new(50) in
+        let r5 = {ref = ptr; val = 60} in
+        printInt(!(r5.ref));
+        r5.ref := 51;
+        printInt(!(r5.ref))
+      )
+    )
+  )
+)
