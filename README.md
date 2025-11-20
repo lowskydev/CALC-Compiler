@@ -1,6 +1,6 @@
 # CALC Language Compiler
 
-A functional-imperative language compiler with first-class functions, mutable references, and data structures. Includes both an interpreter and an optimizing LLVM compiler.
+A functional-imperative language compiler with first-class functions, mutable references, and data structures. Includes both an interpreter and an LLVM compiler.
 
 ## Features
 
