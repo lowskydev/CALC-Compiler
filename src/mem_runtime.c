@@ -56,6 +56,12 @@ void print_string(char* s) {
     printf("%s", s);
 }
 
+char* int_to_string(int n) {
+    char* buffer = (char*)malloc(12 * sizeof(char));
+    sprintf(buffer, "%d", n);
+    return buffer;
+}
+
 void print_endline() {
     printf("\n");
 }

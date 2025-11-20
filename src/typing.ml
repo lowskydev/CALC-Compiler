@@ -52,6 +52,7 @@ type ast =
   | PrintInt of ann * ast
   | PrintBool of ann * ast
   | PrintString of ann * ast
+  | IntToString of ann * ast
   | PrintEndLine of ann
 
   | Fun of ann * string * calc_type * ast
@@ -102,6 +103,7 @@ let type_of = function
   | PrintInt (ann,_) -> ann
   | PrintBool (ann,_) -> ann
   | PrintString (ann,_) -> ann
+  | IntToString (ann, _) -> ann
   | PrintEndLine ann -> ann
 
   | Fun (ann,_,_,_) -> ann
@@ -296,6 +298,13 @@ let rec typecheck_env env e =
       (match type_of e1' with
        | StringT -> PrintString (UnitT, e1')
        | _ -> PrintString (None "Expecting string", e1'))
+
+
+  | Ast.IntToString e ->
+      let e' = typecheck_env env e in
+      (match type_of e' with
+       | IntT -> IntToString (StringT, e')
+       | _ -> IntToString (None "Expecting integer", e'))
 
   | Ast.PrintEndLine -> PrintEndLine UnitT
 

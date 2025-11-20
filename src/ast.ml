@@ -51,6 +51,7 @@ type ast =
   | PrintInt of ast
   | PrintBool of ast
   | PrintString of ast
+  | IntToString of ast
   | PrintEndLine
 
   | Fun of string * type_annotation * ast
@@ -112,6 +113,7 @@ let rec unparse_ast p e =
   | PrintInt e -> "printInt(" ^ unparse_ast 0 e ^ ")"
   | PrintBool e -> "printBool(" ^ unparse_ast 0 e ^ ")"
   | PrintString e -> "printString(" ^ unparse_ast 0 e ^ ")"
+  | IntToString e -> "intToString(" ^ unparse_ast 0 e ^ ")"
   | PrintEndLine -> "printEndLine()"
   | Fun (param, typ, body) -> paren p 1 ("fun (" ^ param ^ ": " ^ unparse_type_annotation typ ^ ") -> " ^ unparse_ast 1 body)
   | App (e1, e2) -> paren p 40 (unparse_ast 40 e1 ^ "(" ^ unparse_ast 0 e2 ^ ")")

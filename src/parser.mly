@@ -14,6 +14,7 @@ open Ast
 %token LBRACE RBRACE LBRACKET RBRACKET
 %token <string> STRING 
 %token TSTRING PRINTSTRING
+%token INTTOSTRING
 
 %start main
 %type <Ast.ast> main
@@ -137,6 +138,7 @@ factor:
   | PRINTINT LPAREN expr RPAREN { PrintInt $3 }
   | PRINTBOOL LPAREN expr RPAREN { PrintBool $3 }
   | PRINTSTRING LPAREN expr RPAREN { PrintString $3 }
+  | INTTOSTRING LPAREN expr RPAREN { IntToString $3 }
   | PRINTENDLINE LPAREN RPAREN { PrintEndLine }
 
 expr_list:

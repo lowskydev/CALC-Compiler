@@ -21,6 +21,7 @@ rule read = parse
   | "printInt"               { PRINTINT }
   | "printBool"              { PRINTBOOL }
   | "printString"            { PRINTSTRING }
+  | "intToString"            { INTTOSTRING }
   | "string"                 { TSTRING }
   | "printEndLine"           { PRINTENDLINE }
   | "fun"                    { FUN }

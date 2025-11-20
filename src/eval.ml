@@ -153,6 +153,11 @@ let rec eval_env env e =
        | StringV s -> print_string s; UnitV
        | _ -> failwith "Runtime error: printString expects string")
 
+  | IntToString e ->
+      (match eval_env env e with
+       | IntV i -> StringV (string_of_int i)
+       | _ -> failwith "Runtime error: intToString expects integer")
+
   | PrintEndLine -> print_newline (); UnitV
 
   | Fun (param, _param_type, body) ->

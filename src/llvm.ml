@@ -302,6 +302,12 @@ let rec compile_llvm env e label block =
       let call_instr = CallVoid ("print_string", [(StringT, r1)]) in
       (Const 0, env1, l1, b1@[call_instr], bs1)
 
+  | IntToString (_, e1) ->
+      let r1, env1, l1, b1, bs1 = compile_llvm env e1 label block in
+      let ret = new_reg() in
+      let call_instr = Call (ret, "int_to_string", [(IntT, r1)]) in
+      (Register ret, env1, l1, b1@[call_instr], bs1)
+
   (* Print operations *)
   | PrintInt (_, e1) ->
     let r1, env1, l1, b1, bs1 = compile_llvm env e1 label block in
@@ -554,6 +560,7 @@ let rec compile_llvm env e label block =
 
 let prologue =
   [ "declare ptr @malloc(i32)";
+  "declare ptr @int_to_string(i32)";
   "declare void @print_string(ptr)";
    "declare ptr @new_ref_int(i32)";
    "declare ptr @new_ref_bool(i1)";
