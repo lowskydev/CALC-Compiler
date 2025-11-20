@@ -7,6 +7,7 @@ type calc_type =
   | RefT of calc_type
   | FunT of calc_type * calc_type
   | TupleT of calc_type list
+  | RecordT of (string * calc_type) list
   | None of string
 
 type ann = calc_type
@@ -54,6 +55,8 @@ type ast =
 
   | Tuple of ann * ast list
   | TupleAccess of ann * ast * int
+  | Record of ann * (string * ast) list
+  | RecordAccess of ann * ast * string
 
 let type_of = function
   | Num _ -> IntT
@@ -98,6 +101,8 @@ let type_of = function
 
   | Tuple (ann, _) -> ann
   | TupleAccess (ann, _, _) -> ann
+  | Record (ann, _) -> ann
+  | RecordAccess (ann, _, _) -> ann
 
 let mk_add t e1 e2 = Add (t,e1,e2)
 let mk_sub t e1 e2 = Sub (t,e1,e2)
@@ -125,6 +130,7 @@ let rec unparse_type = function
   | RefT t -> "ref " ^ unparse_type t
   | FunT (t1, t2) -> "(" ^ unparse_type t1 ^ " -> " ^ unparse_type t2 ^ ")"
   | TupleT ts -> "(" ^ String.concat " * " (List.map unparse_type ts) ^ ")"
+  | RecordT fs -> "{" ^ String.concat "; " (List.map (fun (id,t) -> id ^ ":" ^ unparse_type t) fs) ^ "}"
   | None m -> "typing error: "^m
 
 let rec type_annotation_to_calc_type = function
@@ -134,6 +140,9 @@ let rec type_annotation_to_calc_type = function
   | Ast.TRef t -> RefT (type_annotation_to_calc_type t)
   | Ast.TFun (t1, t2) -> FunT (type_annotation_to_calc_type t1, type_annotation_to_calc_type t2)
   | Ast.TTuple ts -> TupleT (List.map type_annotation_to_calc_type ts)
+  | Ast.TRecord fs -> 
+      let sorted = List.sort (fun (id1,_) (id2,_) -> String.compare id1 id2) fs in
+      RecordT (List.map (fun (id, t) -> (id, type_annotation_to_calc_type t)) sorted)
 
 let type_int_int_int_bin_op mk e1 e2 =
   match type_of e1, type_of e2 with
@@ -302,5 +311,20 @@ let rec typecheck_env env e =
            else
              TupleAccess (None ("Tuple index out of bounds: " ^ string_of_int i), typed_e, i)
        | _ -> TupleAccess (None "Expected tuple type for access", typed_e, i))
+    
+  | Ast.Record fields ->
+      let typed_fields = List.map (fun (id, e) -> (id, typecheck_env env e)) fields in
+      let sorted_fields = List.sort (fun (id1, _) (id2, _) -> String.compare id1 id2) typed_fields in
+      let field_types = List.map (fun (id, e) -> (id, type_of e)) sorted_fields in
+      Record (RecordT field_types, sorted_fields)
+
+  | Ast.RecordAccess (e, id) ->
+      let typed_e = typecheck_env env e in
+      (match type_of typed_e with
+       | RecordT fields ->
+           (match List.assoc_opt id fields with
+            | Some t -> RecordAccess (t, typed_e, id)
+            | None -> RecordAccess (None ("Field not found: " ^ id), typed_e, id))
+       | _ -> RecordAccess (None "Expected record type for access", typed_e, id))
 
 let typecheck e = typecheck_env Env.empty_env e
