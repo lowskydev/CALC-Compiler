@@ -9,6 +9,7 @@ type type_annotation =
   | TFun of type_annotation * type_annotation
   | TTuple of type_annotation list
   | TRecord of (string * type_annotation) list
+  | TList of type_annotation
 
 (* The abstract syntax tree (AST) type for the calc language *)
 type ast =
@@ -51,10 +52,13 @@ type ast =
 
   | Fun of string * type_annotation * ast
   | App of ast * ast
+
   | Tuple of ast list
   | TupleAccess of ast * int
   | Record of (string * ast) list
   | RecordAccess of ast * string
+  | List of ast list
+  | ListAccess of ast * ast
 
 let rec unparse_type_annotation = function
   | TInt -> "int"
@@ -64,6 +68,7 @@ let rec unparse_type_annotation = function
   | TFun (t1, t2) -> "(" ^ unparse_type_annotation t1 ^ " -> " ^ unparse_type_annotation t2 ^ ")"
   | TTuple ts -> "(" ^ String.concat " * " (List.map unparse_type_annotation ts) ^ ")"
   | TRecord fields -> "{" ^ String.concat "; " (List.map (fun (id, t) -> id ^ ":" ^ unparse_type_annotation t) fields) ^ "}"
+  | TList t -> "[" ^ unparse_type_annotation t ^ "]"
 
 let paren = fun p q s -> if p > q then "("^s^")" else s
 
@@ -108,3 +113,5 @@ let rec unparse_ast p e =
   | TupleAccess (e, i) -> paren p 40 (unparse_ast 40 e ^ "." ^ string_of_int i)
   | Record fields -> "{" ^ String.concat "; " (List.map (fun (id, e) -> id ^ " = " ^ unparse_ast 0 e) fields) ^ "}"
   | RecordAccess (e, id) -> paren p 40 (unparse_ast 40 e ^ "." ^ id)
+  | List es -> "[" ^ String.concat ", " (List.map (unparse_ast 0) es) ^ "]"
+  | ListAccess (e, i) -> paren p 40 (unparse_ast 40 e ^ "[" ^ unparse_ast 0 i ^ "]")
