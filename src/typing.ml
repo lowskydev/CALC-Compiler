@@ -8,6 +8,7 @@ type calc_type =
   | FunT of calc_type * calc_type
   | TupleT of calc_type list
   | RecordT of (string * calc_type) list
+  | ListT of calc_type
   | None of string
 
 type ann = calc_type
@@ -57,6 +58,8 @@ type ast =
   | TupleAccess of ann * ast * int
   | Record of ann * (string * ast) list
   | RecordAccess of ann * ast * string
+  | List of ann * ast list
+  | ListAccess of ann * ast * ast
 
 let type_of = function
   | Num _ -> IntT
@@ -103,6 +106,8 @@ let type_of = function
   | TupleAccess (ann, _, _) -> ann
   | Record (ann, _) -> ann
   | RecordAccess (ann, _, _) -> ann
+  | List (ann, _) -> ann
+  | ListAccess (ann, _, _) -> ann
 
 let mk_add t e1 e2 = Add (t,e1,e2)
 let mk_sub t e1 e2 = Sub (t,e1,e2)
@@ -131,6 +136,8 @@ let rec unparse_type = function
   | FunT (t1, t2) -> "(" ^ unparse_type t1 ^ " -> " ^ unparse_type t2 ^ ")"
   | TupleT ts -> "(" ^ String.concat " * " (List.map unparse_type ts) ^ ")"
   | RecordT fs -> "{" ^ String.concat "; " (List.map (fun (id,t) -> id ^ ":" ^ unparse_type t) fs) ^ "}"
+  | ListT t -> "[" ^ unparse_type t ^ "]"
+  
   | None m -> "typing error: "^m
 
 let rec type_annotation_to_calc_type = function
@@ -143,6 +150,7 @@ let rec type_annotation_to_calc_type = function
   | Ast.TRecord fs -> 
       let sorted = List.sort (fun (id1,_) (id2,_) -> String.compare id1 id2) fs in
       RecordT (List.map (fun (id, t) -> (id, type_annotation_to_calc_type t)) sorted)
+  | Ast.TList t -> ListT (type_annotation_to_calc_type t)
 
 let type_int_int_int_bin_op mk e1 e2 =
   match type_of e1, type_of e2 with
@@ -326,5 +334,31 @@ let rec typecheck_env env e =
             | Some t -> RecordAccess (t, typed_e, id)
             | None -> RecordAccess (None ("Field not found: " ^ id), typed_e, id))
        | _ -> RecordAccess (None "Expected record type for access", typed_e, id))
+    
+  | Ast.List es ->
+      if es = [] then
+        (* Without type inference, we cant determine the type of an empty list
+           Fail safely or return a generic/error type. *)
+        List (None "Cannot determine type of empty list", [])
+      else
+        let typed_es = List.map (typecheck_env env) es in
+        let t_head = type_of (List.hd typed_es) in
+        
+        (* Check that all elements have the same type as the first element *)
+        if List.for_all (fun e -> type_of e = t_head) typed_es then
+          List (ListT t_head, typed_es)
+        else
+          List (None "All list elements must have the same type", typed_es)
+
+  | Ast.ListAccess (e, i) ->
+      let typed_e = typecheck_env env e in
+      let typed_i = typecheck_env env i in
+      (match type_of typed_e with
+       | ListT t ->
+           if type_of typed_i = IntT then
+             ListAccess (t, typed_e, typed_i)
+           else
+             ListAccess (None "List index must be an integer", typed_e, typed_i)
+       | _ -> ListAccess (None "Expected list type for index access", typed_e, typed_i))
 
 let typecheck e = typecheck_env Env.empty_env e
