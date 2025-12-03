@@ -1,5 +1,11 @@
 # CALC Language Compiler
 
+
+<div align="center">
+  <img src="assets/calc_snippet.png" alt="Code Snippet" height="120">
+</div>
+
+
 A functional-imperative language compiler with first-class functions, mutable references, and data structures. Includes both an interpreter and an LLVM compiler.
 
 ## Features
