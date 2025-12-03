@@ -1,8 +1,9 @@
-# CALC Language Compiler
-
+<div align="center">
+  # CALC Language Compiler
+</div>
 
 <div align="center">
-  <img src="assets/code_snippet.png" alt="Code Snippet" width=500rem>
+  <img src="assets/code_snippet.png" alt="Code Snippet" width=450rem>
 </div>
 
 
