@@ -2,7 +2,7 @@
 
 
 <div align="center">
-  <img src="assets/calc_snippet.png" alt="Code Snippet" width=500rem>
+  <img src="assets/code_snippet.png" alt="Code Snippet" width=500rem>
 </div>
 
 
